@@ -14,5 +14,6 @@ class GraphState(TypedDict):
     recommended_route: str
     route_explanation: str
     explanation: str
+    llm_used: bool
     workflow_trace: List[str]
     errors: List[str]

@@ -14,6 +14,9 @@ export default function AgentSuggestions({ suggestions }) {
             <div className="agent-header">
               <span className="agent-icon">{ICONS[s.agent] || "🔍"}</span>
               <strong>{s.agent}</strong>
+              <span className={`agent-llm-tag ${s.llm_enriched ? "tag-llm" : "tag-rule"}`}>
+                {s.llm_enriched ? "🤖 LLM" : "⚙️ Rule"}
+              </span>
             </div>
             <p className="agent-suggestion">{s.suggestion}</p>
             <div className="pros-cons">

@@ -24,6 +24,7 @@ def run_simulation(input_data: dict) -> dict:
         "recommended_route": "",
         "route_explanation": "",
         "explanation": "",
+        "llm_used": False,
         "workflow_trace": [],
         "errors": [],
     }
@@ -49,6 +50,7 @@ def run_simulation(input_data: dict) -> dict:
         "recommended_route": final_state["recommended_route"],
         "route_explanation": final_state["route_explanation"],
         "explanation": final_state["explanation"],
+        "llm_used": final_state.get("llm_used", False),
         "risk_level": risk_level,
         "workflow_trace": final_state["workflow_trace"],
         "created_at": created_at,

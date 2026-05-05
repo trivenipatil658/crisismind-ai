@@ -47,3 +47,19 @@ export async function fetchSimulation(id) {
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
+export async function fetchLLMStatus() {
+  const res = await fetch(`${BASE}/llm/status`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function generateReport(simulation_id) {
+  const res = await fetch(`${BASE}/llm/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ simulation_id }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}

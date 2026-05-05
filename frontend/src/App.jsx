@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "leaflet/dist/leaflet.css";
 import "./styles.css";
+import LLMStatus from "./components/LLMStatus";
 import RoleSelector from "./components/RoleSelector";
 import ResourceDashboard from "./components/ResourceDashboard";
 import CrisisForm from "./components/CrisisForm";
@@ -11,6 +12,7 @@ import WorkflowTrace from "./components/WorkflowTrace";
 import DecisionComparison from "./components/DecisionComparison";
 import AgentSuggestions from "./components/AgentSuggestions";
 import ExplainabilityBox from "./components/ExplainabilityBox";
+import AIReport from "./components/AIReport";
 import History from "./components/History";
 import { runSimulation, updateResources } from "./api";
 import { DEMO_RESOURCES } from "./demo";
@@ -48,12 +50,19 @@ export default function App() {
     setDemoLoading(false);
   };
 
+  const handleLoadHistory = (sim) => {
+    setResult(sim);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="app">
       <header className="header">
         <h1 className="title">CrisisMind AI</h1>
         <p className="subtitle">Role-Based LangGraph Disaster Response and Route Decision Simulator</p>
         <p className="tagline">Simulate disaster. Track resources. Compare actions. Visualize routes. Choose the safest response.</p>
+        <LLMStatus />
       </header>
 
       <main className="main">
@@ -72,7 +81,6 @@ export default function App() {
                 {demoLoading ? "Loading..." : "📦 Load Demo Resources for All Roles"}
               </button>
             </div>
-
             <CrisisForm onSubmit={handleSimulate} loading={loading} />
           </>
         )}
@@ -89,13 +97,18 @@ export default function App() {
               recommended={result.recommended_route}
               disasterType={result.disaster_type}
               location={result.location}
-              affectedPopulation={result.decision_paths?.[0] ? 20000 : undefined}
+              affectedPopulation={20000}
             />
             <RouteRecommendation routes={result.route_options} recommended={result.recommended_route} />
             <WorkflowTrace trace={result.workflow_trace} />
             <DecisionComparison paths={result.decision_paths} recommended={result.recommended_path} />
             <AgentSuggestions suggestions={result.agent_suggestions} />
-            <ExplainabilityBox explanation={result.explanation} scenarios={result.generated_scenarios} />
+            <ExplainabilityBox
+              explanation={result.explanation}
+              scenarios={result.generated_scenarios}
+              llmUsed={result.llm_used}
+            />
+            <AIReport simulationId={result.simulation_id} llmUsed={result.llm_used} />
             <div className="card scenario-card">
               <h2 className="section-title">📋 Scenario Summary</h2>
               <p>{result.scenario_summary}</p>
@@ -103,11 +116,11 @@ export default function App() {
           </>
         )}
 
-        <History onLoad={(sim) => { setResult(sim); setError(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+        <History onLoad={handleLoadHistory} />
       </main>
 
       <footer className="footer">
-        <p>CrisisMind AI | FastAPI + LangGraph + React Leaflet | Hack Fusion 2025 | AI/ML Innovation Track</p>
+        <p>CrisisMind AI | FastAPI + LangGraph + Ollama + React Leaflet | Hack Fusion 2025 | AI/ML Innovation Track</p>
       </footer>
     </div>
   );
