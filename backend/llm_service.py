@@ -67,6 +67,7 @@ def llm_explain_decision(
     route_name: str,
     route_status: str,
     route_score: float,
+    weather_context: dict | None = None,
 ) -> tuple[str, bool]:
     """
     Generate LLM explanation for the recommended decision path and route.
@@ -79,6 +80,10 @@ def llm_explain_decision(
         ), False
 
     warnings_text = "\n".join(warnings) if warnings else "No critical warnings."
+    weather_text = ""
+    if weather_context:
+        weather_text = f"\n\nWeather context retrieved by system:\n{json.dumps(weather_context, indent=2)}\n\nInstruction: Use only the provided weather_context. Do not invent live weather data."
+
     prompt = f"""You are a disaster management AI assistant. Based on the following simulation results, write a clear, concise explanation (5-7 sentences) for why this decision was recommended. Do not recalculate scores. Only explain the reasoning.
 
 Disaster: {disaster_type} in {location}
@@ -88,7 +93,7 @@ Safety Score: {safety_score}/100
 Resource Score: {resource_score}/100
 Risk Level: {risk_level}
 Warnings: {warnings_text}
-Recommended Route: {route_name} (Status: {route_status}, Score: {route_score}/100)
+Recommended Route: {route_name} (Status: {route_status}, Score: {route_score}/100){weather_text}
 
 Write the explanation in plain English for a crisis officer. Start with "Path {recommended_path} is recommended because..."
 """

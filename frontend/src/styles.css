@@ -1199,6 +1199,95 @@ textarea::placeholder {
   font-weight: 850;
 }
 
+/* Weather Context Card Styles */
+.weather-rag-card {
+  border-left: 4px solid #58a6ff;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.weather-rag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.weather-rag-title {
+  color: var(--text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.weather-rag-badge {
+  background: linear-gradient(135deg, #58a6ff, #1f6feb);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 1rem;
+}
+
+.weather-rag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.weather-rag-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--surface2);
+  border-radius: 6px;
+}
+
+.weather-rag-label {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.weather-rag-value {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.weather-rag-note {
+  background: var(--surface2);
+  padding: 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.weather-rag-risk-low {
+  color: var(--success);
+}
+
+.weather-rag-risk-medium {
+  color: var(--warn);
+}
+
+.weather-rag-risk-high {
+  color: #ff6b35;
+}
+
+.weather-rag-risk-critical {
+  color: var(--danger);
+}
+
 /* ---------- Tables ---------- */
 
 .table-wrap {

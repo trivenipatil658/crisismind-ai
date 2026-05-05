@@ -4,7 +4,7 @@ Each agent reads disaster input + live resource data and returns a structured su
 """
 
 
-def medical_agent(d: dict, res: dict) -> dict:
+def medical_agent(d: dict, res: dict, weather_context: dict | None = None) -> dict:
     med = res.get("Medical Resource Officer", {})
     overload = d["estimated_injured"] - d["hospital_capacity"]
     beds = med.get("hospital_beds", d["hospital_capacity"])
@@ -27,10 +27,16 @@ def medical_agent(d: dict, res: dict) -> dict:
         )
         pros = ["Hospitals can absorb injured", "Stable medical response"]
         cons = ["Capacity may be strained if situation worsens"]
+
+    # Weather integration
+    if weather_context and weather_context.get("rainfall_mm", 0) >= 25:
+        suggestion += f" Weather alert: Heavy rainfall ({weather_context['rainfall_mm']}mm) may delay ambulance response and increase infection risk in camps."
+        cons.append("Heavy rainfall may complicate medical evacuation")
+
     return {"agent": "Medical Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 
-def rescue_agent(d: dict, res: dict) -> dict:
+def rescue_agent(d: dict, res: dict, weather_context: dict | None = None) -> dict:
     resc = res.get("Rescue Resource Officer", {})
     shortage = d["required_rescue_teams"] - d["available_rescue_teams"]
     vuln_pct = round((d["vulnerable_population"] / max(d["affected_population"], 1)) * 100, 1)
@@ -54,10 +60,21 @@ def rescue_agent(d: dict, res: dict) -> dict:
         )
         pros = ["Full coverage possible", "Water rescue capability available"]
         cons = ["Coordination complexity increases with more teams"]
+
+    # Weather integration
+    if weather_context:
+        rainfall = weather_context.get("rainfall_mm", 0)
+        if rainfall >= 25 and boats > 0:
+            suggestion += f" Weather alert: Heavy rainfall ({rainfall}mm) increases flood risk — prioritize boats and life jackets for vulnerable groups."
+            pros.append("Weather conditions favor boat evacuation")
+        elif weather_context.get("risk_level") == "High":
+            suggestion += f" Weather risk level {weather_context['risk_level']} — {weather_context['risk_note']}"
+            cons.append("Weather may complicate rescue operations")
+
     return {"agent": "Rescue Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 
-def transport_agent(d: dict, res: dict) -> dict:
+def transport_agent(d: dict, res: dict, weather_context: dict | None = None) -> dict:
     trans = res.get("Transport Officer", {})
     blocked = d["blocked_roads"]
     safe_roads = trans.get("safe_roads", 0)
@@ -79,6 +96,18 @@ def transport_agent(d: dict, res: dict) -> dict:
         )
         pros = ["Primary routes mostly usable", "Faster evacuation possible"]
         cons = ["Remaining blockages can cause delays if worsened"]
+
+    # Weather integration
+    if weather_context:
+        rainfall = weather_context.get("rainfall_mm", 0)
+        visibility = weather_context.get("visibility_km", 10)
+        if rainfall >= 25:
+            suggestion += f" Weather alert: Heavy rainfall ({rainfall}mm) may cause additional road flooding — avoid low-lying routes."
+            cons.append("Rainfall may create new road blockages")
+        if visibility <= 5:
+            suggestion += f" Low visibility ({visibility}km) — reduce speed and increase convoy spacing."
+            cons.append("Poor visibility increases accident risk")
+
     return {"agent": "Transport Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 
@@ -129,7 +158,7 @@ def ngo_agent(res: dict) -> dict:
     return {"agent": "NGO Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 
-def fire_safety_agent(d: dict, res: dict) -> dict:
+def fire_safety_agent(d: dict, res: dict, weather_context: dict | None = None) -> dict:
     fire = res.get("Fire and Safety Officer", {})
     firefighters = fire.get("firefighters", 0)
     fire_trucks = fire.get("fire_trucks", 0)
@@ -152,6 +181,12 @@ def fire_safety_agent(d: dict, res: dict) -> dict:
         )
         pros = ["Safety perimeter manageable", "Fire risk under control"]
         cons = ["Situation can escalate if severity increases"]
+
+    # Weather integration
+    if weather_context and weather_context.get("risk_level") == "High":
+        suggestion += f" Weather risk level {weather_context['risk_level']} — {weather_context['risk_note']}"
+        cons.append("Weather conditions may worsen evacuation safety")
+
     return {"agent": "Fire & Safety Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 
@@ -179,7 +214,7 @@ def resource_agent(d: dict, res: dict) -> dict:
     return {"agent": "Resource Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 
-def safety_agent(d: dict) -> dict:
+def safety_agent(d: dict, weather_context: dict | None = None) -> dict:
     vuln = d["vulnerable_population"]
     severity = d["severity_level"]
     if severity >= 70 or vuln > 3000:
@@ -197,6 +232,13 @@ def safety_agent(d: dict) -> dict:
         )
         pros = ["Controlled evacuation reduces panic", "Manageable safety risk"]
         cons = ["Situation can escalate if severity increases"]
+
+    # Weather integration
+    if weather_context and weather_context.get("risk_level") in ["High", "Medium"]:
+        suggestion += f" Weather risk level {weather_context['risk_level']} — {weather_context['risk_note']}"
+        if weather_context.get("rainfall_mm", 0) >= 25:
+            cons.append("Heavy rainfall may increase safety risks during evacuation")
+
     return {"agent": "Safety Agent", "suggestion": suggestion, "pros": pros, "cons": cons}
 
 

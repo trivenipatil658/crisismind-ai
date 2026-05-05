@@ -27,6 +27,7 @@ def run_simulation(input_data: dict) -> dict:
         "llm_used": False,
         "workflow_trace": [],
         "errors": [],
+        "weather_context": {},
     }
 
     final_state = workflow.invoke(initial_state)
@@ -54,6 +55,7 @@ def run_simulation(input_data: dict) -> dict:
         "llm_used": final_state.get("llm_used", False),
         "risk_level": risk_level,
         "workflow_trace": final_state["workflow_trace"],
+        "weather_context": final_state.get("weather_context", {}),
         "created_at": created_at,
     }
 

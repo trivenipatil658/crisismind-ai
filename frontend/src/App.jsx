@@ -30,6 +30,7 @@ import RiskRadar3D from "./components/RiskRadar3D";
 import RouteDecision3D from "./components/RouteDecision3D";
 import ResourceControl3D from "./components/ResourceControl3D";
 import WorkflowPipeline3D from "./components/WorkflowPipeline3D";
+import WeatherContextCard from "./components/WeatherContextCard";
 
 export default function App() {
   const { user, logout } = useAuth();
@@ -188,6 +189,10 @@ export default function App() {
             <RecommendationCard result={result} />
 
             <RiskRadar3D result={result} />
+
+            {result.weather_context && (
+              <WeatherContextCard weather={result.weather_context} />
+            )}
 
             <ResourceFreshness />
 

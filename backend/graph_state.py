@@ -17,3 +17,4 @@ class GraphState(TypedDict):
     llm_used: bool
     workflow_trace: List[str]
     errors: List[str]
+    weather_context: Dict[str, Any]

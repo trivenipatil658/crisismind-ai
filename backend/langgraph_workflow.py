@@ -17,6 +17,7 @@ from llm_service import (
     llm_explain_decision, llm_enrich_agent_suggestion,
     llm_explain_route, is_ollama_available
 )
+from tools.weather_retriever import get_weather_context, weather_score_adjustment
 
 OK = "[OK]"
 
@@ -29,6 +30,18 @@ def validate_input_node(state: GraphState) -> GraphState:
     if d.get("affected_population", 0) <= 0:
         errors.append("affected_population must be positive")
     return {**state, "errors": errors, "llm_used": False, "workflow_trace": [f"validate_input {OK}"]}
+
+
+def weather_retriever_node(state: GraphState) -> GraphState:
+    d = state["input_data"]
+    weather_context = get_weather_context(
+        location=d.get("location", "Zone A"),
+        latitude=d.get("latitude"),
+        longitude=d.get("longitude"),
+        disaster_type=d.get("disaster_type"),
+        existing_weather=d.get("weather_condition")
+    )
+    return {**state, "weather_context": weather_context, "workflow_trace": state["workflow_trace"] + [f"weather_retriever {OK}"]}
 
 
 def resource_context_node(state: GraphState) -> GraphState:
@@ -51,7 +64,7 @@ def scenario_generator_node(state: GraphState) -> GraphState:
 
 
 def medical_agent_node(state: GraphState) -> GraphState:
-    result = medical_agent(state["input_data"], state["resource_data"])
+    result = medical_agent(state["input_data"], state["resource_data"], state.get("weather_context"))
     return {
         **state,
         "agent_suggestions": state.get("agent_suggestions", []) + [result],
@@ -60,7 +73,7 @@ def medical_agent_node(state: GraphState) -> GraphState:
 
 
 def rescue_agent_node(state: GraphState) -> GraphState:
-    result = rescue_agent(state["input_data"], state["resource_data"])
+    result = rescue_agent(state["input_data"], state["resource_data"], state.get("weather_context"))
     return {
         **state,
         "agent_suggestions": state["agent_suggestions"] + [result],
@@ -69,7 +82,7 @@ def rescue_agent_node(state: GraphState) -> GraphState:
 
 
 def transport_agent_node(state: GraphState) -> GraphState:
-    result = transport_agent(state["input_data"], state["resource_data"])
+    result = transport_agent(state["input_data"], state["resource_data"], state.get("weather_context"))
     return {
         **state,
         "agent_suggestions": state["agent_suggestions"] + [result],
@@ -96,7 +109,7 @@ def ngo_agent_node(state: GraphState) -> GraphState:
 
 
 def fire_safety_agent_node(state: GraphState) -> GraphState:
-    result = fire_safety_agent(state["input_data"], state["resource_data"])
+    result = fire_safety_agent(state["input_data"], state["resource_data"], state.get("weather_context"))
     return {
         **state,
         "agent_suggestions": state["agent_suggestions"] + [result],
@@ -114,7 +127,7 @@ def resource_agent_node(state: GraphState) -> GraphState:
 
 
 def safety_agent_node(state: GraphState) -> GraphState:
-    result = safety_agent(state["input_data"])
+    result = safety_agent(state["input_data"], state.get("weather_context"))
     return {
         **state,
         "agent_suggestions": state["agent_suggestions"] + [result],
@@ -130,7 +143,7 @@ def decision_path_node(state: GraphState) -> GraphState:
 
 
 def scoring_node(state: GraphState) -> GraphState:
-    paths = score_all_paths(state["input_data"])
+    paths = score_all_paths(state["input_data"], state.get("weather_context"))
     return {
         **state,
         "scored_paths": paths,
@@ -237,6 +250,7 @@ def ollama_explanation_node(state: GraphState) -> GraphState:
         route_name=best_route["route_name"] if best_route else "N/A",
         route_status=best_route["route_status"] if best_route else "N/A",
         route_score=best_route["route_score"] if best_route else 0,
+        weather_context=state.get("weather_context"),
     )
 
     # Append human approval note
@@ -266,6 +280,7 @@ def build_workflow():
 
     nodes = [
         ("validate_input",      validate_input_node),
+        ("weather_retriever",   weather_retriever_node),
         ("resource_context",    resource_context_node),
         ("scenario_generator",  scenario_generator_node),
         ("medical_agent",       medical_agent_node),

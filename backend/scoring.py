@@ -2,6 +2,10 @@ def clamp(value: float) -> float:
     return max(0.0, min(100.0, value))
 
 
+def clamp_score(value):
+    return max(0, min(100, round(value, 2)))
+
+
 def get_risk_level(risk_score: float) -> str:
     if risk_score <= 30:
         return "Low"
@@ -118,10 +122,32 @@ def score_path_c(d: dict, base_risk: float, confidence: float) -> dict:
     }
 
 
-def score_all_paths(d: dict) -> list:
+def score_all_paths(d: dict, weather_context: dict | None = None) -> list:
     base_risk = compute_risk_score(d)
     confidence = compute_confidence_score(d)
     paths = [score_path_a(d, base_risk, confidence), score_path_b(d, base_risk, confidence), score_path_c(d, base_risk, confidence)]
+
+    # Apply weather adjustments if available
+    if weather_context:
+        from tools.weather_retriever import weather_score_adjustment
+        weather_adj = weather_score_adjustment(weather_context)
+        for path in paths:
+            path["risk_score"] = clamp_score(path["risk_score"] + weather_adj["risk_delta"])
+            path["safety_score"] = clamp_score(path["safety_score"] + weather_adj["route_safety_delta"])
+            path["speed_score"] = clamp_score(path["speed_score"] + weather_adj["travel_feasibility_delta"])
+            path["confidence_score"] = clamp_score(path["confidence_score"] + weather_adj["confidence_delta"])
+            # Recalculate final score
+            path["final_decision_score"] = clamp_score(
+                0.35 * path["safety_score"] + 0.25 * path["resource_score"] +
+                0.20 * path["speed_score"] + 0.10 * path["cost_score"] + 0.10 * path["confidence_score"]
+            )
+            # Recalculate success probability
+            path["success_probability"] = clamp_score(
+                0.30 * path["safety_score"] + 0.25 * path["resource_score"] +
+                0.20 * path["speed_score"] + 0.15 * path["confidence_score"] + 0.10 * (100 - path["risk_score"])
+            )
+            path["failure_probability"] = clamp_score(100 - path["success_probability"])
+
     sorted_paths = sorted(paths, key=lambda p: p["final_decision_score"], reverse=True)
     for i, p in enumerate(sorted_paths):
         p["rank"] = i + 1
