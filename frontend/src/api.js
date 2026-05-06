@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export async function runSimulation(data) {
   const res = await fetch(`${BASE}/simulate`, {
@@ -96,6 +96,26 @@ export async function fetchScoreBreakdown(simulation_id) {
 
 export async function fetchResourceFreshness() {
   const res = await fetch(`${BASE}/resources/freshness`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function previewNotifications(simulation_id, alert_target = "both", region = null) {
+  const res = await fetch(`${BASE}/notifications/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ simulation_id, alert_target, region }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function sendNotifications(simulation_id, alert_target = "both", region = null, approved_by = "Crisis Admin") {
+  const res = await fetch(`${BASE}/notifications/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ simulation_id, alert_target, region, approved_by }),
+  });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

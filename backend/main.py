@@ -14,6 +14,7 @@ from database import (
 )
 from llm_service import is_ollama_available, llm_generate_report, OLLAMA_MODEL
 from services.email_service import send_email_alert, build_email_content
+from services.sms_service import send_alerts, build_team_alert, build_public_alert, get_demo_recipients
 import os
 try:
     from dotenv import load_dotenv
@@ -331,3 +332,80 @@ def resource_freshness():
     elif any(r["status"] == "warning" for r in results):
         overall = "warning"
     return {"overall": overall, "details": results}
+
+
+# ── Notification endpoints ─────────────────────────────────────────────────────
+
+class NotificationPreviewRequest(BaseModel):
+    simulation_id: str
+    alert_target: Optional[str] = "both"  # "team", "public", or "both"
+    region: Optional[str] = None
+
+class NotificationSendRequest(BaseModel):
+    simulation_id: str
+    alert_target: Optional[str] = "both"  # "team", "public", or "both"
+    region: Optional[str] = None
+    approved_by: Optional[str] = "Crisis Admin"
+
+@app.post("/notifications/preview")
+def preview_notifications(req: NotificationPreviewRequest):
+    result = get_simulation_by_id(req.simulation_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Simulation not found")
+
+    # Check if simulation is approved
+    if not result.get("approved", False):
+        raise HTTPException(status_code=400, detail="Simulation must be approved before sending notifications")
+
+    preview = {}
+
+    if req.alert_target in ["team", "both"]:
+        team_message = build_team_alert(result)
+        team_recipients = get_demo_recipients(req.region, "team")
+        preview["team_alert"] = {
+            "message": team_message,
+            "recipient_count": len(team_recipients),
+            "recipients": team_recipients
+        }
+
+    if req.alert_target in ["public", "both"]:
+        public_message = build_public_alert(result)
+        public_recipients = get_demo_recipients(req.region, "public")
+        preview["public_alert"] = {
+            "message": public_message,
+            "recipient_count": len(public_recipients),
+            "recipients": public_recipients
+        }
+
+    return {
+        "simulation_id": req.simulation_id,
+        "alert_target": req.alert_target,
+        "region": req.region or "Zone A",
+        "preview": preview
+    }
+
+@app.post("/notifications/send")
+def send_notifications(req: NotificationSendRequest):
+    result = get_simulation_by_id(req.simulation_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Simulation not found")
+
+    # Check if simulation is approved
+    if not result.get("approved", False):
+        raise HTTPException(status_code=400, detail="Simulation must be approved before sending notifications")
+
+    # Send alerts
+    alert_result = send_alerts(
+        simulation=result,
+        alert_target=req.alert_target,
+        region=req.region,
+        approved_by=req.approved_by
+    )
+
+    return {
+        "simulation_id": req.simulation_id,
+        "alert_target": req.alert_target,
+        "region": req.region or "Zone A",
+        "approved_by": req.approved_by,
+        "result": alert_result
+    }

@@ -33,9 +33,18 @@ export default function ResourceControl3D({ resources }) {
           const pct = item.total > 0 ? Math.round((item.value / item.total) * 100) : 0;
 
           return (
-            <div key={item.label} className="resource3d-tile">
+            <div
+              key={item.label}
+              className="resource3d-tile"
+              style={{
+                borderColor: sm.border,
+                background: `linear-gradient(180deg, #ffffff 0%, ${sm.bg} 100%)`,
+              }}
+            >
               <div className="resource3d-tile-top">
-                <span className="resource3d-icon">{item.icon}</span>
+                <span className="resource3d-icon" style={{ background: sm.color, color: "#fff" }}>
+                  {item.icon}
+                </span>
                 <span
                   className="resource3d-status-badge"
                   style={{ background: sm.bg, color: sm.color, border: `1px solid ${sm.border}` }}

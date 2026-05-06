@@ -3,7 +3,16 @@ import sqlite3
 import json
 from datetime import datetime
 
-DB_PATH = os.getenv("DATABASE_FILE", "crisismind.db")
+DB_URL = os.getenv("DATABASE_URL", "sqlite:///./data/crisismind.db")
+if DB_URL.startswith("sqlite:///"):
+    DB_PATH = DB_URL.replace("sqlite:///", "", 1)
+else:
+    DB_PATH = DB_URL
+
+if DB_PATH.startswith("./"):
+    DB_PATH = DB_PATH[2:]
+
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 
 def init_db():
