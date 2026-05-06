@@ -1,8 +1,9 @@
+import os
 import sqlite3
 import json
 from datetime import datetime
 
-DB_PATH = "crisismind.db"
+DB_PATH = os.getenv("DATABASE_FILE", "crisismind.db")
 
 
 def init_db():
